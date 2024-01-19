@@ -1,105 +1,115 @@
-'use strict';
-
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-const refs = {
-  daysEl: document.querySelector('[data-days]'),
-  hoursEl: document.querySelector('[data-hours]'),
-  minutesEl: document.querySelector('[data-minutes]'),
-  secondsEl: document.querySelector('[data-seconds]'),
-  startBtn: document.querySelector('[data-start]'),
-  datePicker: document.querySelector('#datetime-picker'),
+let targetDate;
+
+const inputEl = document.querySelector('#datetime-picker');
+const buttonEl = document.querySelector('[data-start]');
+const timerEls = {
+  days: document.querySelector('[data-days]'),
+  hours: document.querySelector('[data-hours]'),
+  minutes: document.querySelector('[data-minutes]'),
+  seconds: document.querySelector('[data-seconds]'),
 };
 
-refs.startBtn.disabled = true;
-let endDate = null;
-
-flatpickr(refs.datePicker, {
+const inputOptions = {
   enableTime: true,
   time_24hr: true,
-  defaultDate: new Date(),
+  //   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    const selectedDate = selectedDates[0];
+    targetDate = selectedDates[0];
 
-    if (selectedDate.getTime() < new Date().getTime()) {
-      iziToast.error({
-        position: 'topRight',
-        title: 'Error!',
+    const isDateValid = Date.now() < targetDate.getTime();
+    if (!isDateValid) {
+      iziToast.show({
+        title: 'Error',
+        titleColor: '#FFF',
+        titleSize: '16px',
         message: 'Please choose a date in the future',
+        messageColor: '#FFF',
+        messageSize: '16px',
+        position: 'topCenter',
+        backgroundColor: '#EF4040',
+        iconUrl: './octagon.svg',
+        timeout: 500000,
+        close: false,
+        buttons: [
+          [
+            `<button type="button" id="izi-close-button">
+                 <img src="./x.svg" alt="" width="16px" height="16px" />
+              </button>`,
+            function (instance, toast) {
+              instance.hide({}, toast, 'buttonName');
+            },
+          ],
+        ],
       });
-      refs.startBtn.disabled = true;
-      return;
     }
 
-    iziToast.success({
-      position: 'topRight',
-      title: 'Success!',
-      message: `It's valide date, click on "Start"`,
-    });
-
-    endDate = selectedDate;
-    refs.startBtn.disabled = false;
+    setAccessElement(buttonEl, isDateValid);
+    // console.log(selectedDates[0]);
   },
+};
+
+setAccessElement(buttonEl);
+
+inputEl.addEventListener('focus', () => {
+  inputOptions.defaultDate = new Date();
+  flatpickr(inputEl, inputOptions);
 });
 
-refs.startBtn.addEventListener('click', onclick);
+buttonEl.addEventListener('click', () => {
+  let timeLeft = 0;
+  let timeObject = {};
+  const intervalId = setInterval(() => {
+    timeLeft = targetDate.getTime() - Date.now();
 
-function onclick() {
-  refs.startBtn.disabled = true;
+    if (timeLeft > 0) {
+      timeObject = convertMs(timeLeft);
 
-  const timer = setInterval(() => {
-    const resultDate = selectDate();
-
-    if (resultDate <= 0) {
-      clearInterval(timer);
-      refs.daysEl.textContent = '00';
-      refs.hoursEl.textContent = '00';
-      refs.minutesEl.textContent = '00';
-      refs.secondsEl.textContent = '00';
-      return;
+      for (const [key, elem] of Object.entries(timerEls)) {
+        elem.textContent =
+          key === 'days' && timeObject[key] > 99
+            ? timeObject[key]
+            : (elem.textContent = String(timeObject[key]).padStart(2, '0'));
+      }
+    } else {
+      clearInterval(intervalId);
+      setAccessElement(inputEl, true);
     }
-
-    const datatimeComponents = convertMs(resultDate);
-
-    return clockInterface(datatimeComponents);
   }, 1000);
-}
 
-function selectDate() {
-  const now = Date.now();
-  const distance = endDate.getTime() - now;
+  setAccessElement(buttonEl);
+  setAccessElement(inputEl);
+});
 
-  return distance < 0 ? 0 : distance;
+function setAccessElement(domElement, enable = false) {
+  let isDisabled = domElement.classList.contains('disabled-element');
+  if (isDisabled === enable) {
+    domElement.classList.toggle('disabled-element');
+  }
+  if (domElement.classList.contains('disabled-element')) domElement.blur();
 }
 
 function convertMs(ms) {
+  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
-  const days = addLeadingZero(Math.floor(ms / day));
-  const hours = addLeadingZero(Math.floor((ms % day) / hour));
-  const minutes = addLeadingZero(Math.floor(((ms % day) % hour) / minute));
-  const seconds = addLeadingZero(
-    Math.floor((((ms % day) % hour) % minute) / second)
-  );
+  // Remaining days
+  const days = Math.floor(ms / day);
+  // Remaining hours
+  const hours = Math.floor((ms % day) / hour);
+  // Remaining minutes
+  const minutes = Math.floor(((ms % day) % hour) / minute);
+  // Remaining seconds
+  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
-}
-
-function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
-}
-
-function clockInterface({ days, hours, minutes, seconds }) {
-  refs.daysEl.textContent = days;
-  refs.hoursEl.textContent = hours;
-  refs.minutesEl.textContent = minutes;
-  refs.secondsEl.textContent = seconds;
 }
