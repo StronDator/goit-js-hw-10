@@ -6,8 +6,8 @@ import 'izitoast/dist/css/iziToast.min.css';
 
 let targetDate;
 
-const inputEl = document.querySelector('#datetime-picker');
-const buttonEl = document.querySelector('[data-start]');
+const inputElem = document.querySelector('#datetime-picker');
+const startButton = document.querySelector('[data-start]');
 const timerEls = {
   days: document.querySelector('[data-days]'),
   hours: document.querySelector('[data-hours]'),
@@ -50,19 +50,19 @@ const inputOptions = {
       });
     }
 
-    setAccessElement(buttonEl, isDateValid);
+    setElementAccessibility(startButton, isDateValid);
     // console.log(selectedDates[0]);
   },
 };
 
-setAccessElement(buttonEl);
+setElementAccessibility(startButton);
 
-inputEl.addEventListener('focus', () => {
+inputElem.addEventListener('focus', () => {
   inputOptions.defaultDate = new Date();
-  flatpickr(inputEl, inputOptions);
+  flatpickr(inputElem, inputOptions);
 });
 
-buttonEl.addEventListener('click', () => {
+startButton.addEventListener('click', () => {
   let timeLeft = 0;
   let timeObject = {};
   const intervalId = setInterval(() => {
@@ -79,15 +79,15 @@ buttonEl.addEventListener('click', () => {
       }
     } else {
       clearInterval(intervalId);
-      setAccessElement(inputEl, true);
+      setElementAccessibility(inputElem, true);
     }
   }, 1000);
 
-  setAccessElement(buttonEl);
-  setAccessElement(inputEl);
+  setElementAccessibility(startButton);
+  setElementAccessibility(inputElem);
 });
 
-function setAccessElement(domElement, enable = false) {
+function setElementAccessibility(domElement, enable = false) {
   let isDisabled = domElement.classList.contains('disabled-element');
   if (isDisabled === enable) {
     domElement.classList.toggle('disabled-element');
