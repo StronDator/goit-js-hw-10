@@ -18,12 +18,12 @@ const timerEls = {
 const inputOptions = {
   enableTime: true,
   time_24hr: true,
-  //   defaultDate: new Date(),
+  defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
     targetDate = selectedDates[0];
 
-    const isDateValid = Date.now() < targetDate.getTime();
+    const isDateValid = inputOptions.defaultDate < targetDate.getTime();
     if (!isDateValid) {
       iziToast.show({
         title: 'Error',
@@ -50,17 +50,15 @@ const inputOptions = {
       });
     }
 
+
     setElementAccessibility(startButton, isDateValid);
-    // console.log(selectedDates[0]);
   },
 };
 
-setElementAccessibility(startButton);
+flatpickr(inputElem, inputOptions);
 
-inputElem.addEventListener('focus', () => {
-  inputOptions.defaultDate = new Date();
-  flatpickr(inputElem, inputOptions);
-});
+setElementAccessibility(startButton);
+  
 
 startButton.addEventListener('click', () => {
   let timeLeft = 0;
